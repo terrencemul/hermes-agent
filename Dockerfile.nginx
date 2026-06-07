@@ -1,0 +1,11 @@
+FROM nginx:alpine
+
+# Username: admin, Password: hermes
+RUN echo "admin:\$apr1\$9m1z0xP4\$XaK/dsuZkU5aPxzMAPLr3." > /etc/nginx/.htpasswd
+
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
+
