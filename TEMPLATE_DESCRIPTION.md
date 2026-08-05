@@ -51,7 +51,7 @@ A managed Hermes Agent service on Railway requires the official Docker image wit
 
 ### Implementation Details for Hermes Agent (Using Nous-Hermes official docker image)
 
-This template runs the official `nousresearch/hermes-agent` Docker image with a custom entrypoint that starts both the messaging gateway and the WebUI dashboard. The dashboard serves on the configured PORT for web access. Key envs include `PORT` and `HERMES_HOME`. LLM provider keys and channel tokens are configured through the WebUI after deployment.
+This template runs the official `nousresearch/hermes-agent` Docker image, which supervises the gateway and WebUI dashboard under s6. The dashboard serves on the configured PORT and needs a login. Key envs are `PORT`, `HERMES_HOME`, and `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` / `_PASSWORD`. LLM keys and channel tokens are set in the WebUI after deploy.
 
 ## How does Hermes AI compare against other AI Agent platforms
 
