@@ -59,6 +59,12 @@ if [ -d "$TD_AUTOMATE_HOME" ] && [ -n "${TD_AUTOMATE_API_SERVER_KEY:-}" ]; then
     upsert_td_automate_env "API_SERVER_KEY" "$TD_AUTOMATE_API_SERVER_KEY"
     upsert_td_automate_env "API_SERVER_MODEL_NAME" "tdautomate"
 
+    # This is a public website assistant, not a general-purpose operator. Use
+    # Hermes' own config writer to disable every side-effecting or data-bearing
+    # toolset for this profile before it accepts API traffic.
+    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set agent.disabled_toolsets '["browser", "clarify", "code_execution", "cronjob", "delegation", "file", "image_gen", "memory", "other", "session_search", "skills", "terminal", "tts", "vision", "web"]'
+    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set approvals.mode manual
+
     # `HERMES_HOME` intentionally applies only to this command. It starts the
     # requested profile through the image's supervisor without retargeting the
     # running default profile.
