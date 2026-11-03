@@ -43,7 +43,7 @@ upsert_td_automate_env() {
     END {
       if (!replaced) print key "=" value
     }
-  ' "$TD_AUTOMATE_ENV_FILE" > "$temporary_file"
+  ' "$TD_AUTOMATE_ENV_FILE" > "$temporary_file" || return 1
   mv "$temporary_file" "$TD_AUTOMATE_ENV_FILE"
 }
 
@@ -52,18 +52,20 @@ if [ -d "$TD_AUTOMATE_HOME" ] && [ -n "${TD_AUTOMATE_API_SERVER_KEY:-}" ]; then
   # gateway restart. The subshell keeps its environment scoped as well.
   if ! (
     umask 077
-    touch "$TD_AUTOMATE_ENV_FILE"
-    upsert_td_automate_env "API_SERVER_ENABLED" "true"
-    upsert_td_automate_env "API_SERVER_HOST" "0.0.0.0"
-    upsert_td_automate_env "API_SERVER_PORT" "8650"
-    upsert_td_automate_env "API_SERVER_KEY" "$TD_AUTOMATE_API_SERVER_KEY"
-    upsert_td_automate_env "API_SERVER_MODEL_NAME" "tdautomate"
+    # This subshell is tested by `if !`, so Bash suppresses `set -e` here.
+    # Stop explicitly on every failed preparation step before starting the profile.
+    touch "$TD_AUTOMATE_ENV_FILE" || exit 1
+    upsert_td_automate_env "API_SERVER_ENABLED" "true" || exit 1
+    upsert_td_automate_env "API_SERVER_HOST" "0.0.0.0" || exit 1
+    upsert_td_automate_env "API_SERVER_PORT" "8650" || exit 1
+    upsert_td_automate_env "API_SERVER_KEY" "$TD_AUTOMATE_API_SERVER_KEY" || exit 1
+    upsert_td_automate_env "API_SERVER_MODEL_NAME" "tdautomate" || exit 1
 
     # This is a public website assistant, not a general-purpose operator. Use
     # Hermes' own config writer to disable every side-effecting or data-bearing
     # toolset for this profile before it accepts API traffic.
-    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set agent.disabled_toolsets '["browser", "clarify", "code_execution", "cronjob", "delegation", "file", "image_gen", "memory", "other", "session_search", "skills", "terminal", "tts", "vision", "web"]'
-    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set approvals.mode manual
+    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set agent.disabled_toolsets '["browser", "clarify", "code_execution", "cronjob", "delegation", "file", "image_gen", "memory", "other", "session_search", "skills", "terminal", "tts", "vision", "web"]' || exit 1
+    HERMES_HOME="$TD_AUTOMATE_HOME" hermes config set approvals.mode manual || exit 1
 
     # `HERMES_HOME` intentionally applies only to this command. It starts the
     # requested profile through the image's supervisor without retargeting the
@@ -79,3 +81,4 @@ fi
 # CMD is /init's main program: when it exits the whole supervision tree comes
 # down. Nothing left to do in the foreground, so just stay alive.
 exec sleep infinity
+
